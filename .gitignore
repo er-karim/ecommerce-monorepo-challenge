@@ -36,3 +36,5 @@ yarn-error.log*
 dist/
 
 apps/inventory/.env
+
+**/coverage
