@@ -1,8 +1,15 @@
-import "dotenv/config";
-import { app } from "./server";
+import { createApp } from "./app";
+import { InventoryRepository } from "./repositories/inventory.repository";
+import { InventoryService } from "./services/inventory.service";
+import { InventoryController } from "./controllers/inventory.controller";
 
-const port = process.env.PORT || 4000;
+const repository = new InventoryRepository();
+const service = new InventoryService(repository);
+const controller = new InventoryController(service);
 
-app.listen(port, () => {
-  console.log(`Inventory service listening on port ${port}`);
+const app = createApp(controller);
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
 });
