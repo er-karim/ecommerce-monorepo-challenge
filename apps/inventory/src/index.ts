@@ -1,3 +1,4 @@
+import "dotenv/config";
 import { createApp } from "./app";
 import { InventoryRepository } from "./repositories/inventory.repository";
 import { InventoryService } from "./services/inventory.service";
