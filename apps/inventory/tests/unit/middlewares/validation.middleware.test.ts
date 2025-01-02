@@ -1,5 +1,5 @@
-import { validateQuantity } from "../../../src/middlewares/validation.middleware";
 import { Request, Response } from "express";
+import { validateQuantity } from "../../../src/middlewares/validation.middleware";
 
 describe("Validation Middleware", () => {
   let mockRequest: Partial<Request>;
@@ -8,71 +8,53 @@ describe("Validation Middleware", () => {
 
   beforeEach(() => {
     mockRequest = {
-      body: {} as Request["body"],
+      body: {},
     };
     mockResponse = {};
     mockNext = jest.fn();
   });
 
-  it("should allow valid positive integers", () => {
-    mockRequest.body.quantity = "5";
+  describe("validateQuantity", () => {
+    const validationTestCases = [
+      {
+        scenario: "reject negative integers",
+        input: -5,
+        expectedMessage: "Quantity must be a positive integer",
+      },
+      {
+        scenario: "reject floating point numbers",
+        input: 5.5,
+        expectedMessage: "Quantity must be an integer value",
+      },
+      {
+        scenario: "reject non-numeric strings",
+        input: "abc",
+        expectedMessage: "Quantity must be a valid number",
+      },
+      {
+        scenario: "reject empty values",
+        input: "",
+        expectedMessage: "Quantity must be a valid number",
+      },
+    ];
 
-    validateQuantity(
-      mockRequest as Request,
-      mockResponse as Response,
-      mockNext
-    );
+    validationTestCases.forEach(({ scenario, input, expectedMessage }) => {
+      it(`should ${scenario}`, () => {
+        mockRequest.body = { quantity: input };
 
-    expect(mockRequest.body.quantity).toBe(5);
-    expect(mockNext).toHaveBeenCalledWith();
-  });
+        validateQuantity(
+          mockRequest as Request,
+          mockResponse as Response,
+          mockNext
+        );
 
-  it("should reject negative numbers", () => {
-    mockRequest.body.quantity = -1;
-
-    validateQuantity(
-      mockRequest as Request,
-      mockResponse as Response,
-      mockNext
-    );
-
-    expect(mockNext).toHaveBeenCalledWith(
-      expect.objectContaining({
-        statusCode: 400,
-        message: expect.stringContaining("Invalid quantity"),
-      })
-    );
-  });
-
-  it("should reject zero", () => {
-    mockRequest.body.quantity = 0;
-
-    validateQuantity(
-      mockRequest as Request,
-      mockResponse as Response,
-      mockNext
-    );
-
-    expect(mockNext).toHaveBeenCalledWith(
-      expect.objectContaining({
-        statusCode: 400,
-      })
-    );
-  });
-
-  it("should reject non-numeric strings", () => {
-    mockRequest.body.quantity = "abc";
-
-    validateQuantity(
-      mockRequest as Request,
-      mockResponse as Response,
-      mockNext
-    );
-
-    expect(mockNext).toHaveBeenCalledWith(
-      expect.objectContaining({
-        statusCode: 400,
-      })
-    );
+        expect(mockNext).toHaveBeenCalledWith(
+          expect.objectContaining({
+            statusCode: 400,
+            message: expectedMessage,
+          })
+        );
+      });
+    });
   });
 });

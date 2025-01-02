@@ -11,6 +11,15 @@ export const errorHandler = (
     console.error("Error occurred:", error);
   }
 
+  // Add specific handling for ValidationError
+  if (error.name === "ValidationError") {
+    res.status(400).json({
+      error: error.message,
+      status: 400,
+    });
+    return;
+  }
+
   // Check if error is an instance of our custom errors
   if (error.name === "ProductNotFoundError") {
     res.status(404).json({
