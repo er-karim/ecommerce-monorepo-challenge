@@ -1,3 +1,5 @@
+import { sanitizeInput } from "./utils/sanitization";
+
 interface APIResponse {
   message: string;
 }
@@ -12,7 +14,8 @@ export class InventoryAPIClient {
   private baseUrl: string = "http://localhost:4000/inventory";
 
   async getProduct(productId: string): Promise<Product> {
-    const response = await fetch(`${this.baseUrl}/${productId}`);
+    const sanitizedId = sanitizeInput.uuid(productId);
+    const response = await fetch(`${this.baseUrl}/${sanitizedId}`);
     const data = await response.json();
 
     if (!response.ok) {
@@ -26,12 +29,15 @@ export class InventoryAPIClient {
     productId: string,
     quantity: number
   ): Promise<APIResponse> {
-    const response = await fetch(`${this.baseUrl}/${productId}/purchase`, {
+    const sanitizedId = sanitizeInput.uuid(productId);
+    const sanitizedQuantity = sanitizeInput.quantity(quantity);
+
+    const response = await fetch(`${this.baseUrl}/${sanitizedId}/purchase`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ quantity }),
+      body: JSON.stringify({ quantity: sanitizedQuantity }),
     });
 
     const data = await response.json();
