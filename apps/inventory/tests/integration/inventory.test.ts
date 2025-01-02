@@ -9,23 +9,37 @@ describe("Inventory API Integration Tests", () => {
   let app: Application;
   let mockRepository: jest.Mocked<InventoryRepository>;
 
-  const setupApp = () => {
+  beforeEach(() => {
+    // Reset all singleton instances
+    InventoryRepository["instance"] = undefined;
+    InventoryService["instance"] = undefined;
+    InventoryController["instance"] = undefined;
+
+    // Create mock repository
     mockRepository = {
       findById: jest.fn(),
       updateInventory: jest.fn(),
     } as jest.Mocked<InventoryRepository>;
 
-    const service = new InventoryService(mockRepository);
-    const controller = new InventoryController(service);
-    return createApp(controller);
-  };
+    // Setup repository mock
+    jest
+      .spyOn(InventoryRepository, "getInstance")
+      .mockReturnValue(mockRepository);
 
-  beforeEach(() => {
-    app = setupApp();
+    // Create application with singleton controller
+    app = createApp(InventoryController.getInstance());
   });
 
   afterEach(() => {
     jest.clearAllMocks();
+  });
+
+  afterAll(() => {
+    // Clean up singleton instances
+    InventoryRepository["instance"] = undefined;
+    InventoryService["instance"] = undefined;
+    InventoryController["instance"] = undefined;
+    jest.restoreAllMocks();
   });
 
   describe("GET /inventory/:productId", () => {

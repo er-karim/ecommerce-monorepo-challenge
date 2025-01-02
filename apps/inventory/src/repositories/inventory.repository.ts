@@ -4,6 +4,17 @@ import { eq } from "drizzle-orm";
 import { Product } from "../models/inventory";
 
 export class InventoryRepository {
+  private static instance: InventoryRepository | undefined;
+
+  private constructor() {}
+
+  public static getInstance(): InventoryRepository {
+    if (!InventoryRepository.instance) {
+      InventoryRepository.instance = new InventoryRepository();
+    }
+    return InventoryRepository.instance;
+  }
+
   async findById(productId: string): Promise<Product | null> {
     const [product] = await db
       .select()

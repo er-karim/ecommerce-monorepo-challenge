@@ -15,7 +15,7 @@ describe("InventoryRepository", () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    repository = new InventoryRepository();
+    repository = InventoryRepository.getInstance();
   });
 
   describe("findById", () => {

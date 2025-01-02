@@ -1,12 +1,8 @@
 import "dotenv/config";
 import { createApp } from "./app";
-import { InventoryRepository } from "./repositories/inventory.repository";
-import { InventoryService } from "./services/inventory.service";
 import { InventoryController } from "./controllers/inventory.controller";
 
-const repository = new InventoryRepository();
-const service = new InventoryService(repository);
-const controller = new InventoryController(service);
+const controller = InventoryController.getInstance();
 
 const app = createApp(controller);
 

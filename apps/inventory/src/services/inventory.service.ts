@@ -6,7 +6,20 @@ import {
 import { Product } from "../models/inventory";
 
 export class InventoryService {
-  constructor(private repository: InventoryRepository) {}
+  private static instance: InventoryService | undefined;
+  private repository: InventoryRepository;
+
+  private constructor(repository: InventoryRepository) {
+    this.repository = repository;
+  }
+
+  public static getInstance(): InventoryService {
+    if (!InventoryService.instance) {
+      const repository = InventoryRepository.getInstance();
+      InventoryService.instance = new InventoryService(repository);
+    }
+    return InventoryService.instance;
+  }
 
   async getProduct(productId: string): Promise<Product> {
     const product = await this.repository.findById(productId);

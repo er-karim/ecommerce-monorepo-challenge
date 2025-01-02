@@ -6,7 +6,20 @@ import {
 } from "../utils/errors";
 
 export class InventoryController {
-  constructor(private service: InventoryService) {}
+  private static instance: InventoryController | undefined;
+  private service: InventoryService;
+
+  private constructor(service: InventoryService) {
+    this.service = service;
+  }
+
+  public static getInstance(): InventoryController {
+    if (!InventoryController.instance) {
+      const service = InventoryService.getInstance();
+      InventoryController.instance = new InventoryController(service);
+    }
+    return InventoryController.instance;
+  }
 
   getProduct = async (
     req: Request,

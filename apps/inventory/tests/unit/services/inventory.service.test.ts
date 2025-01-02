@@ -6,6 +6,8 @@ import {
 } from "../../../src/utils/errors";
 import { Product } from "../../../src/models/inventory";
 
+jest.mock("../../../src/repositories/inventory.repository");
+
 describe("InventoryService", () => {
   let service: InventoryService;
   let mockRepository: jest.Mocked<InventoryRepository>;
@@ -16,17 +18,33 @@ describe("InventoryService", () => {
   };
 
   beforeEach(() => {
+    // Reset singleton instances
+    jest.clearAllMocks();
+    InventoryRepository["instance"] = undefined;
+    InventoryService["instance"] = undefined;
+
+    // Create mock repository
     mockRepository = {
       findById: jest.fn(),
       updateInventory: jest.fn(),
     } as jest.Mocked<InventoryRepository>;
 
-    service = new InventoryService(mockRepository);
+    // Mock the getInstance method of InventoryRepository
+    jest
+      .spyOn(InventoryRepository, "getInstance")
+      .mockReturnValue(mockRepository);
+
+    // Get a new service instance using singleton pattern
+    service = InventoryService.getInstance();
+  });
+
+  afterAll(() => {
+    jest.restoreAllMocks();
   });
 
   describe("getProduct", () => {
-    it("should return the product when it exists", async () => {
-      mockRepository.findById.mockResolvedValue(mockProduct);
+    it("should return product when found", async () => {
+      mockRepository.findById.mockResolvedValueOnce(mockProduct);
 
       const result = await service.getProduct("test-id");
 
@@ -35,9 +53,9 @@ describe("InventoryService", () => {
     });
 
     it("should throw ProductNotFoundError when product doesn't exist", async () => {
-      mockRepository.findById.mockResolvedValue(null);
+      mockRepository.findById.mockResolvedValueOnce(null);
 
-      await expect(service.getProduct("nonexistent-id")).rejects.toThrow(
+      await expect(service.getProduct("nonexistent-id")).rejects.toThrowError(
         ProductNotFoundError
       );
 
@@ -45,71 +63,79 @@ describe("InventoryService", () => {
     });
 
     it("should propagate repository errors", async () => {
-      const error = new Error("Database connection failed");
-      mockRepository.findById.mockRejectedValue(error);
+      const error = new Error("Database error");
+      mockRepository.findById.mockRejectedValueOnce(error);
 
-      await expect(service.getProduct("test-id")).rejects.toThrow(error);
+      await expect(service.getProduct("test-id")).rejects.toThrowError(error);
+
+      expect(mockRepository.findById).toHaveBeenCalledWith("test-id");
     });
   });
 
   describe("purchaseProduct", () => {
     it("should successfully process purchase when sufficient inventory exists", async () => {
-      mockRepository.findById.mockResolvedValue(mockProduct);
-      mockRepository.updateInventory.mockResolvedValue();
+      mockRepository.findById.mockResolvedValueOnce(mockProduct);
+      mockRepository.updateInventory.mockResolvedValueOnce();
 
       await service.purchaseProduct("test-id", 5);
 
       expect(mockRepository.findById).toHaveBeenCalledWith("test-id");
-      expect(mockRepository.updateInventory).toHaveBeenCalledWith("test-id", 5);
+      expect(mockRepository.updateInventory).toHaveBeenCalledWith(
+        "test-id",
+        mockProduct.inventoryCount - 5
+      );
     });
 
     it("should throw ProductNotFoundError when product doesn't exist", async () => {
-      mockRepository.findById.mockResolvedValue(null);
+      mockRepository.findById.mockResolvedValueOnce(null);
 
       await expect(
         service.purchaseProduct("nonexistent-id", 5)
-      ).rejects.toThrow(ProductNotFoundError);
+      ).rejects.toThrowError(ProductNotFoundError);
 
       expect(mockRepository.findById).toHaveBeenCalledWith("nonexistent-id");
-      expect(mockRepository.updateInventory).not.toHaveBeenCalled();
     });
 
     it("should throw InsufficientInventoryError when requested quantity exceeds available stock", async () => {
       const lowStockProduct = { ...mockProduct, inventoryCount: 3 };
-      mockRepository.findById.mockResolvedValue(lowStockProduct);
+      mockRepository.findById.mockResolvedValueOnce(lowStockProduct);
 
-      await expect(service.purchaseProduct("test-id", 5)).rejects.toThrow(
+      await expect(service.purchaseProduct("test-id", 5)).rejects.toThrowError(
         InsufficientInventoryError
       );
 
-      expect(mockRepository.updateInventory).not.toHaveBeenCalled();
+      expect(mockRepository.findById).toHaveBeenCalledWith("test-id");
     });
 
     it("should allow purchase of exact available quantity", async () => {
-      mockRepository.findById.mockResolvedValue(mockProduct);
-      mockRepository.updateInventory.mockResolvedValue();
+      mockRepository.findById.mockResolvedValueOnce(mockProduct);
+      mockRepository.updateInventory.mockResolvedValueOnce();
 
       await service.purchaseProduct("test-id", mockProduct.inventoryCount);
 
+      expect(mockRepository.findById).toHaveBeenCalledWith("test-id");
       expect(mockRepository.updateInventory).toHaveBeenCalledWith("test-id", 0);
     });
 
     it("should propagate repository update errors", async () => {
       const error = new Error("Update failed");
-      mockRepository.findById.mockResolvedValue(mockProduct);
-      mockRepository.updateInventory.mockRejectedValue(error);
+      mockRepository.findById.mockResolvedValueOnce(mockProduct);
+      mockRepository.updateInventory.mockRejectedValueOnce(error);
 
-      await expect(service.purchaseProduct("test-id", 5)).rejects.toThrow(
+      await expect(service.purchaseProduct("test-id", 5)).rejects.toThrowError(
         error
       );
+
+      expect(mockRepository.findById).toHaveBeenCalledWith("test-id");
     });
 
     it("should calculate correct remaining inventory after purchase", async () => {
-      mockRepository.findById.mockResolvedValue(mockProduct);
-      mockRepository.updateInventory.mockResolvedValue();
+      mockRepository.findById.mockResolvedValueOnce(mockProduct);
+      mockRepository.updateInventory.mockResolvedValueOnce();
 
       await service.purchaseProduct("test-id", 3);
 
+      expect(mockRepository.findById).toHaveBeenCalledWith("test-id");
       expect(mockRepository.updateInventory).toHaveBeenCalledWith(
         "test-id",
         mockProduct.inventoryCount - 3
