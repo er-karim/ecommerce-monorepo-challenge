@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { InventoryAPIClient } from "@repo/api-client";
+import { FormInput, Alert, Button } from "@repo/ui/components";
 
 interface Product {
   id: string;
@@ -17,6 +18,10 @@ interface SuccessState {
 interface ErrorState {
   type: "error";
   message: string;
+}
+
+interface ErrorResponse {
+  error: string;
 }
 
 type LookupState = SuccessState | ErrorState | null;
@@ -45,7 +50,7 @@ export function ProductLookup(): JSX.Element {
         try {
           const errorResponse = JSON.parse(
             error.message.replace("Error: ", "")
-          );
+          ) as ErrorResponse;
           errorMessage = errorResponse.error || error.message;
         } catch {
           errorMessage = error.message;
@@ -67,127 +72,100 @@ export function ProductLookup(): JSX.Element {
     setProductId(e.target.value);
   };
 
+  const renderInventoryStatus = (product: Product): JSX.Element => {
+    const isLowStock = product.inventoryCount < 10;
+
+    return (
+      <div className="space-y-4">
+        <div className="stats shadow">
+          <div className="stat">
+            <div className="stat-title">Product Name</div>
+            <div className="stat-value text-lg">{product.name}</div>
+          </div>
+
+          <div className="stat">
+            <div className="stat-title">Inventory Status</div>
+            <div className="stat-value text-lg">
+              <div className="flex items-center gap-2">
+                <span
+                  className={`badge badge-lg ${isLowStock ? "badge-error" : "badge-success"}`}
+                >
+                  {product.inventoryCount} units
+                </span>
+              </div>
+            </div>
+            <div className="stat-desc">
+              {isLowStock ? "Low stock alert!" : "Good stock level"}
+            </div>
+          </div>
+        </div>
+
+        {isLowStock && (
+          <div className="alert alert-warning">
+            <svg
+              className="h-6 w-6 shrink-0 stroke-current"
+              fill="none"
+              viewBox="0 0 24 24"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+              />
+            </svg>
+            <span>Low stock warning! Order soon to ensure availability.</span>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  const renderLookupState = (): JSX.Element | null => {
+    if (!lookupState) {
+      return null;
+    }
+
+    if (lookupState.type === "error") {
+      return <Alert message={lookupState.message} type="error" />;
+    }
+
+    return renderInventoryStatus(lookupState.data);
+  };
+
   return (
-    <div className="overflow-hidden rounded-lg bg-white shadow transition-shadow hover:shadow-md">
-      <div className="px-6 py-8 sm:px-8">
+    <div className="card bg-base-100 shadow-xl hover:shadow-2xl transition-all duration-300">
+      <div className="card-body">
         <form
           className="space-y-6"
           onSubmit={(e): void => {
             void handleSubmit(e);
           }}
         >
-          <div>
-            <label
-              className="block text-sm font-medium text-gray-700"
-              htmlFor="productId"
-            >
-              Product ID
-              <span className="ml-1 text-red-500">*</span>
-            </label>
-            <div className="mt-1">
-              <input
-                className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                id="productId"
-                onChange={handleProductIdChange}
-                pattern="^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
-                placeholder="Enter UUID format product ID"
-                required
-                title="Please enter a valid UUID"
-                type="text"
-                value={productId}
-              />
-              <p className="mt-1 text-xs text-gray-500">
-                Format: xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx
-              </p>
-            </div>
-          </div>
+          <FormInput
+            helperText="Format: xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx"
+            id="productId"
+            label="Product ID"
+            onChange={handleProductIdChange}
+            pattern="^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+            placeholder="Enter UUID format product ID"
+            required
+            value={productId}
+          />
 
-          <button
-            className={`relative w-full rounded-md px-4 py-3 text-sm font-semibold text-white transition-all
-              ${
-                loading
-                  ? "bg-gray-400 cursor-not-allowed"
-                  : "bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-              }`}
+          <Button
+            className="w-full"
             disabled={loading}
+            loading={loading}
             type="submit"
           >
-            {loading && (
-              <span className="absolute inset-y-0 left-4 flex items-center">
-                <svg
-                  className="h-5 w-5 animate-spin text-white"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                >
-                  <circle
-                    className="opacity-25"
-                    cx="12"
-                    cy="12"
-                    r="10"
-                    stroke="currentColor"
-                    strokeWidth="4"
-                  />
-                  <path
-                    className="opacity-75"
-                    fill="currentColor"
-                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
-                  />
-                </svg>
-              </span>
-            )}
-            <span className={loading ? "ml-6" : ""}>
-              {loading ? "Looking up..." : "Check Inventory"}
-            </span>
-          </button>
+            {loading ? "Looking up..." : "Check Inventory"}
+          </Button>
         </form>
 
-        {lookupState && (
-          <div
-            className={`mt-6 rounded-md p-4 ${
-              lookupState.type === "error"
-                ? "bg-red-50 border border-red-200"
-                : "bg-green-50 border border-green-200"
-            }`}
-          >
-            {lookupState.type === "error" ? (
-              <div className="flex items-center">
-                <span className="flex-shrink-0 h-5 w-5 mr-3 text-red-400">
-                  ⚠️
-                </span>
-                <p className="text-sm text-red-700">{lookupState.message}</p>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                <div className="flex items-center">
-                  <span className="flex-shrink-0 h-5 w-5 mr-3 text-green-400">
-                    ✓
-                  </span>
-                  <p className="text-sm font-medium text-green-800">
-                    Product Found
-                  </p>
-                </div>
-                <div className="pl-8 space-y-2">
-                  <p className="text-sm text-gray-900">
-                    <span className="font-medium">Name:</span>{" "}
-                    {lookupState.data.name}
-                  </p>
-                  <p className="text-sm text-gray-900">
-                    <span className="font-medium">Available:</span>{" "}
-                    <span
-                      className={`font-medium ${
-                        lookupState.data.inventoryCount < 10
-                          ? "text-red-600"
-                          : "text-green-600"
-                      }`}
-                    >
-                      {lookupState.data.inventoryCount} units
-                    </span>
-                  </p>
-                </div>
-              </div>
-            )}
-          </div>
-        )}
+        {lookupState && <div className="divider" />}
+        {renderLookupState()}
       </div>
     </div>
   );
