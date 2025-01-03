@@ -2,17 +2,28 @@ import { InventoryForm } from "../components/inventory-form";
 
 export default function Page(): JSX.Element {
   return (
-    <main className="min-h-screen bg-gradient-soft px-4 py-12 sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-4xl">
-        <header className="mb-12 text-center">
-          <h1 className="text-4xl font-extrabold tracking-tight text-gray-900 sm:text-5xl">
-            Inventory Management
-          </h1>
-          <p className="mt-4 text-xl text-gray-600">
-            Update product inventory levels and manage stock quantities
-          </p>
-        </header>
-        <InventoryForm />
+    <main className="min-h-screen bg-base-200">
+      <div className="bg-gradient-to-b from-primary/10 to-base-100 py-16">
+        <div className="container mx-auto px-4">
+          <div className="text-center max-w-3xl mx-auto">
+            <h1 className="text-5xl font-bold mb-4 bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+              Inventory Management
+            </h1>
+          </div>
+        </div>
+      </div>
+
+      <div className="container mx-auto px-4 py-12">
+        <div className="max-w-2xl mx-auto">
+          <div className="card bg-base-100 shadow-xl">
+            <div className="card-body">
+              <h2 className="card-title text-2xl font-bold mb-6">
+                Update Inventory
+              </h2>
+              <InventoryForm />
+            </div>
+          </div>
+        </div>
       </div>
     </main>
   );
