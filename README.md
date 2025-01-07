@@ -6,6 +6,26 @@ an e-commerce inventory management system using a monorepo architecture (I've cr
 - **Store (Next.js)** – Front-facing shopping experience
 - **Inventory Microservice (Express + Drizzle + PostgreSQL)** – Manages product inventory
 
+### Store
+
+<div align="center">
+  <img src="docs/images/store-home.png" alt="Store Homepage" width="800"/>
+</div>
+
+<div align="center">
+  <img src="docs/images/store-home-error.png" alt="Store Homepage error" width="800"/>
+</div>
+
+### Dashboard
+
+<div align="center">
+  <img src="docs/images/dashboard.png" alt="Dashboard" width="800"/>
+</div>
+
+<div align="center">
+  <img src="docs/images/dashboard-error.png" alt="Dashboard error" width="800"/>
+</div>
+
 ## 1. Prerequisites
 
 - Node.js >= 18
